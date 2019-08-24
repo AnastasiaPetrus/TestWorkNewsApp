@@ -30,7 +30,7 @@ class NewsFetchManager: NSObject {
                 }
             }
             url = url + "sortBy=publishedAt&apiKey=\(apiKey)"
-            print(url)
+            
             sendRequest(url: url, typeOfSorting: typeOfSorting) { (response, error) in
                 completionHandler(response, error)
             }
@@ -43,13 +43,12 @@ class NewsFetchManager: NSObject {
             if let language = languageType {
                 url = url + "language=\(language)&"
             }
-            https://newsapi.org/v2/sources?category=business&sortBy=publishedAt&apiKey=0d85e6cf2c5f4807965098ff95e3e20d
             
             if let country = countryType {
                 url = url + "country=\(country)&"
             }
             url = url + "sortBy=publishedAt&apiKey=\(apiKey)"
-            print(url)
+            
             sendRequest(url: url, typeOfSorting: typeOfSorting) { (response, error) in
                 completionHandler(response, error)
             }
@@ -85,31 +84,32 @@ class NewsFetchManager: NSObject {
     
     func parseJSON(json : JSON, typeOfSorting: String) -> ([NewsArticle], errorMessage : String?) {
         var resultArray = [NewsArticle]()
-            var articleIndex = 0
-            if typeOfSorting == "articles"{
-                while articleIndex < json[typeOfSorting].count {
-                    let article = NewsArticle()
-                    article.source = json[typeOfSorting][articleIndex]["source"]["name"].stringValue
-                    article.author = json[typeOfSorting][articleIndex]["author"].stringValue
-                    article.title =  json[typeOfSorting][articleIndex]["title"].stringValue
-                    article.description = json[typeOfSorting][articleIndex]["description"].stringValue
-                    article.urlToImage = json[typeOfSorting][articleIndex]["urlToImage"].stringValue
-                    article.url = json[typeOfSorting][articleIndex]["url"].stringValue
-                    resultArray.append(article)
-                    
-                    articleIndex+=1
-                }
-            } else {
-                while articleIndex < json[typeOfSorting].count {
-                    let article = NewsArticle()
-                    article.title = json[typeOfSorting][articleIndex]["name"].stringValue
-                    article.description = json[typeOfSorting][articleIndex]["description"].stringValue
-                    article.url = json[typeOfSorting][articleIndex]["url"].stringValue
-                    resultArray.append(article)
-                    
-                    articleIndex+=1
-                }
+        var articleIndex = 0
+        if typeOfSorting == "articles"{
+            while articleIndex < json[typeOfSorting].count {
+                var article = NewsArticle()
+                article.source = json[typeOfSorting][articleIndex]["source"]["name"].stringValue
+                article.author = json[typeOfSorting][articleIndex]["author"].stringValue
+                article.title =  json[typeOfSorting][articleIndex]["title"].stringValue
+                article.description = json[typeOfSorting][articleIndex]["description"].stringValue
+                article.urlToImage = json[typeOfSorting][articleIndex]["urlToImage"].stringValue
+                article.url = json[typeOfSorting][articleIndex]["url"].stringValue
+                resultArray.append(article)
+                
+                articleIndex += 1
             }
+        } else {
+            while articleIndex < json[typeOfSorting].count {
+                var article = NewsArticle()
+                article.title = json[typeOfSorting][articleIndex]["name"].stringValue
+                article.description = json[typeOfSorting][articleIndex]["description"].stringValue
+                article.url = json[typeOfSorting][articleIndex]["url"].stringValue
+                resultArray.append(article)
+                
+                articleIndex += 1
+            }
+        }
+        
         return (resultArray, json["message"].stringValue)
     }
 }

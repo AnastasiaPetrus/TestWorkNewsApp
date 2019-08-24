@@ -8,7 +8,7 @@
 
 import Foundation
 
-class NewsArticle {
+struct NewsArticle {
     
     var source : String?
     var author : String?

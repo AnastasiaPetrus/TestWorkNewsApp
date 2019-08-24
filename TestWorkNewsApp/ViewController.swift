@@ -10,19 +10,23 @@ import UIKit
 import SafariServices
 import SDWebImage
 
-class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, SFSafariViewControllerDelegate, UISearchBarDelegate { var searchPhrase : String?
+class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, SFSafariViewControllerDelegate, UISearchBarDelegate {
+    
+    var searchPhrase : String?
     var selectedCategoryType : String?
     var selectedLanguageType : String?
     var selectedCountryType : String?
     
     var newsFetchManager = NewsFetchManager()
-    var dictionaryWithResponseData = [NewsArticle]()
-    var refrecher: UIRefreshControl!
+    var articlesArray = [NewsArticle]()
+    var refresher: UIRefreshControl!
+    
+    @IBOutlet var tableView: UITableView!
+    @IBOutlet var searchBar: UISearchBar!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setRefresher()
-        sendRequest()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -31,53 +35,41 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     }
     
     func setRefresher(){
-        refrecher = UIRefreshControl()
-        tableView.addSubview(refrecher)
-        refrecher.attributedTitle = NSAttributedString(string: "Pull to refresh")
-        refrecher.tintColor = UIColor(red: 0.08, green: 0.31, blue: 0.75, alpha: 0.7)
-        refrecher.addTarget(self, action: #selector(sendRequest), for: .valueChanged)
+        refresher = UIRefreshControl()
+        tableView.addSubview(refresher)
+        refresher.attributedTitle = NSAttributedString(string: "Pull to refresh")
+        refresher.tintColor = UIColor(red: 0.08, green: 0.31, blue: 0.75, alpha: 0.7)
+        refresher.addTarget(self, action: #selector(sendRequest), for: .valueChanged)
     }
     
     override func viewWillAppear(_ animated: Bool) {
         tableView.setContentOffset(.zero, animated:true)
         searchPhrase = UserDefaults.standard.string(forKey: "searchPhrase")
-         searchBar.text = searchPhrase
+        searchBar.text = searchPhrase
         selectedCategoryType = UserDefaults.standard.string(forKey: "categoryType")
         selectedLanguageType = UserDefaults.standard.string(forKey: "languageType")
         selectedCountryType = UserDefaults.standard.string(forKey: "countyType")
-        checkIfTypeWasChanged()
-    }
-
-    
-    func checkIfTypeWasChanged(){
-        if searchPhrase != nil || selectedCategoryType != nil || selectedLanguageType != nil || selectedCountryType != nil {
-            sendRequest()
-        }
+        
+        sendRequest()
     }
     
     //Mark: Work with TableView
-    @IBOutlet var tableView: UITableView!
-    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return dictionaryWithResponseData.count
+        return articlesArray.count
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 300.0
     }
-    
-//    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
-//        return 300.0
-//    }
-    
+   
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "NewsCell") as? CustomTableViewCell
-        if dictionaryWithResponseData.isEmpty != true {
-            cell?.authorLabel.text = dictionaryWithResponseData[indexPath.row].author
-            cell?.titleLabel.text = dictionaryWithResponseData[indexPath.row].title
-            cell?.sourceLabel.text = dictionaryWithResponseData[indexPath.row].source
-            cell?.descriptionLabel.text = dictionaryWithResponseData[indexPath.row].description
-            cell?.pictureView.sd_setImage(with: URL(string: dictionaryWithResponseData[indexPath.row].urlToImage ?? ""), placeholderImage: UIImage(named: "background"))
+        if articlesArray.isEmpty != true {
+            cell?.authorLabel.text = articlesArray[indexPath.row].author
+            cell?.titleLabel.text = articlesArray[indexPath.row].title
+            cell?.sourceLabel.text = articlesArray[indexPath.row].source
+            cell?.descriptionLabel.text = articlesArray[indexPath.row].description
+            cell?.pictureView.sd_setImage(with: URL(string: articlesArray[indexPath.row].urlToImage ?? ""), placeholderImage: UIImage(named: "background"))
         } else {
             cell?.authorLabel.text = ""
             cell?.titleLabel.text = ""
@@ -85,12 +77,13 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             cell?.descriptionLabel.text = "No articles."
             cell?.pictureView =  UIImageView(image: UIImage(named: "background"))
         }
+        
         return cell!
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath){
-        if dictionaryWithResponseData.isEmpty != true {
-            if let urlAsString = dictionaryWithResponseData[indexPath.row].url {
+        if articlesArray.isEmpty != true {
+            if let urlAsString = articlesArray[indexPath.row].url {
                 if let url = URL(string: urlAsString) {
                     let safariLink = SFSafariViewController(url: url)
                     present(safariLink, animated: true, completion: nil)
@@ -100,18 +93,11 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         }
     }
     
-//    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-//        tableView.tableHeaderView = searchBar
-//    }
-//
-//    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-//        tableView.tableHeaderView = nil
-//    }
-    
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        tableView.scrollToNearestSelectedRow(at: UITableView.ScrollPosition.top, animated: true)
+    }
     
     //Mark: Work with SearchBar
-    @IBOutlet var searchBar: UISearchBar!
-    
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         searchBar.resignFirstResponder()
         tableView.endEditing(true)
@@ -127,7 +113,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     @objc func sendRequest(){
         newsFetchManager.generateURL(searchPhrase: searchPhrase, categoryType: selectedCategoryType, languageType: selectedLanguageType, countryType: selectedCountryType) { (response, error) in
                 if let resp = response, error == nil || error == "" {
-                    self.dictionaryWithResponseData = resp
+                    self.articlesArray = resp
                     self.tableView.reloadData()
                 } else if error != nil || error != "" {
                     self.showAlert(title: "Alert", message:  error ?? "Error.", action: "Ok")
@@ -135,7 +121,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                     self.showAlert(title: "Alert", message:  "No articles for your parameters", action: "Ok")
                 }
             }
-        refrecher.endRefreshing()
+        refresher.endRefreshing()
     }
     
     func showAlert(title: String, message: String, action: String){
@@ -147,14 +133,6 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         searchBar.text = ""
     }
-    
-//    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
-//        tableView.isPagingEnabled = false
-//    }
-//
-//    func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
-//        tableView.isPagingEnabled = true
-//    }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         view.endEditing(true)

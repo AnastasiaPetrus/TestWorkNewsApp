@@ -26,10 +26,6 @@ class FiltersTableViewController: UITableViewController, UIPickerViewDelegate, U
     @IBOutlet var languageType: UIPickerView!
     @IBOutlet var countyType: UIPickerView!
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-    }
-    
     override func viewWillAppear(_ animated: Bool) {
         selectedCategoryNumber = UserDefaults.standard.integer(forKey: "categoryTypeNumber")
         selectedLanguageNumber = UserDefaults.standard.integer(forKey: "languageTypeNumber")
