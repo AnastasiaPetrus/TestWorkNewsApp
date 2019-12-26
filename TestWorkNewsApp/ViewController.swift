@@ -31,7 +31,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        tableView.isPagingEnabled = true
+        tableView.isPagingEnabled = false
     }
     
     func setRefresher(){
